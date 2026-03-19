@@ -65,7 +65,7 @@ Trained in **IBM Watsonx / Google Colab** (Python + scikit-learn):
 | Layer | Technology |
 |-------|-----------|
 | **Database** | Supabase PostgreSQL (9 tables, 20,500+ records) |
-| **API** | Supabase Edge Functions (Deno/TypeScript) — 18 queries |
+| **API** | Supabase Edge Functions (Deno/TypeScript) 18 queries |
 | **ML / AI** | IBM Watsonx + Google Colab (Python, scikit-learn) |
 | **Dashboard** | Vanilla HTML, CSS, JavaScript + Chart.js + Leaflet.js |
 | **Hosting** | GitHub Pages (free, no server) |
