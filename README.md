@@ -126,4 +126,4 @@ Built by **Mark Ochwada**
 
 ## 📄 License
 
-MIT License — free to use, modify, and share with attribution.
+MIT License: free to use, modify, and share with attribution.
