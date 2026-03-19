@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ochwada Capital — SME Investment Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#1a2340;--navy2:#222c4a;
+  --red:#8B1A1A;--green:#22c55e;--amber:#f59e0b;--blue:#3b82f6;--teal:#0d9488;--purple:#8b5cf6;
+  --white:#ffffff;--bg:#f2f5fb;--card:#ffffff;--border:#e4e9f4;
+  --text:#1a2340;--muted:#7a85a0;
+  --font:'Nunito','Aptos','Segoe UI',sans-serif;
+}
+body{background:var(--bg);font-family:var(--font);color:var(--text);min-height:100vh;}
+
+/* ── LOGO ─────────────────────────────────────────── */
+.logo-block{display:flex;align-items:center;gap:0;}
+
+/* ── TOP BAR ─────────────────────────────────────── */
+.top-bar{background:var(--navy);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.top-nav{display:flex;gap:2px;}
+.top-nav a{padding:6px 16px;border-radius:20px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.45);cursor:pointer;transition:all .2s;}
+.top-nav a.active,.top-nav a:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.top-bar-right{display:flex;align-items:center;gap:12px;}
+.live-pill{display:flex;align-items:center;gap:6px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--green);letter-spacing:1px;}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.btn-ref{padding:7px 18px;background:var(--red);border:none;border-radius:20px;color:#fff;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;}
+.btn-ref:hover{background:#a32020;}
+
+/* ── KPI HERO ─────────────────────────────────────── */
+.kpi-hero{background:var(--navy);padding:24px 32px 30px;display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.khi{padding:0 24px;border-right:1px solid rgba(255,255,255,0.08);}
+.khi:first-child{padding-left:0;}.khi:last-child{border-right:none;}
+.khi-label{font-size:10.5px;font-weight:600;color:rgba(255,255,255,0.38);letter-spacing:0.5px;margin-bottom:7px;text-transform:uppercase;}
+.khi-value{font-size:28px;font-weight:900;color:#fff;line-height:1;margin-bottom:6px;letter-spacing:-0.5px;}
+.khi-sub{font-size:11px;font-weight:600;}
+.up{color:var(--green);}.dn{color:#f87171;}.nt{color:rgba(255,255,255,0.28);}
+
+/* ── FILTER BAR ───────────────────────────────────── */
+.filter-bar{background:var(--white);border-bottom:1px solid var(--border);padding:10px 32px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.filter-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-right:4px;}
+.fsel{padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text);cursor:pointer;outline:none;transition:border-color .2s;}
+.fsel:focus,.fsel:hover{border-color:var(--red);}
+.filter-reset{padding:6px 14px;background:transparent;border:1px solid var(--red);border-radius:20px;font-family:var(--font);font-size:11px;font-weight:700;color:var(--red);cursor:pointer;transition:all .2s;margin-left:auto;}
+.filter-reset:hover{background:var(--red);color:#fff;}
+
+/* ── TABS ─────────────────────────────────────────── */
+.section-tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;display:flex;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+.stab{padding:14px 20px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
+.stab:hover{color:var(--text);}.stab.active{color:var(--red);border-bottom-color:var(--red);}
+
+/* ── CONTENT ──────────────────────────────────────── */
+.content{padding:22px 32px 60px;}
+.section{display:none;}.section.active{display:block;animation:fadeUp .25s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARD ─────────────────────────────────────────── */
+.card{background:var(--card);border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,0.04);overflow:hidden;}
+.ch{padding:15px 20px 11px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;}
+.ct{font-size:13px;font-weight:700;color:var(--text);}.cs{font-size:11px;color:var(--muted);margin-top:2px;}
+.cb{padding:14px 20px 18px;}
+
+/* ── GRIDS ────────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.g13{display:grid;grid-template-columns:1fr 3fr;gap:14px;margin-bottom:14px;}
+.g31{display:grid;grid-template-columns:3fr 1fr;gap:14px;margin-bottom:14px;}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:14px;}
+.mb{margin-bottom:14px;}
+
+/* ── METRIC CARDS ─────────────────────────────────── */
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+.mg5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px;}
+.mc{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:18px 18px 16px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04);transition:transform .18s,box-shadow .18s;}
+.mc:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.08);}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mc,var(--red));}
+.mc-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.mc-value{font-size:26px;font-weight:900;color:var(--text);line-height:1;margin-bottom:6px;letter-spacing:-0.5px;}
+.mc-desc{font-size:11px;color:var(--muted);font-weight:500;}
+
+/* ── ALERT CARD ───────────────────────────────────── */
+.alert-card{background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:14px 18px;margin-bottom:14px;}
+.alert-title{font-size:12px;font-weight:700;color:#dc2626;margin-bottom:4px;}
+.alert-body{font-size:11.5px;color:#7f1d1d;}
+
+/* ── TABLES ───────────────────────────────────────── */
+.tw{overflow-x:auto;}
+table.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt thead tr{border-bottom:2px solid var(--border);}
+.dt th{padding:10px 13px;text-align:left;font-size:10px;letter-spacing:0.5px;color:var(--muted);font-weight:700;text-transform:uppercase;white-space:nowrap;}
+.dt td{padding:9px 13px;border-bottom:1px solid #f0f3f9;color:var(--text);white-space:nowrap;font-weight:500;}
+.dt tbody tr:hover td{background:#f8faff;}
+.hl{color:var(--amber);font-weight:800;}.hr{color:var(--red);font-weight:800;}
+
+/* ── BADGES ───────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+.bb{background:#eff6ff;color:#2563eb;}.bg{background:#f0fdf4;color:#16a34a;}
+.by{background:#fffbeb;color:#d97706;}.br{background:#fef2f2;color:#dc2626;}
+.bn{background:#eff4ff;color:#1A3A5C;}.bv{background:#f5f3ff;color:#7c3aed;}
+
+/* ── SECTION TITLE ────────────────────────────────── */
+.section-head{margin-bottom:16px;}
+.section-head h2{font-size:18px;font-weight:800;color:var(--text);}
+.section-head p{font-size:12px;color:var(--muted);margin-top:3px;}
+
+/* ── LOADING ──────────────────────────────────────── */
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;font-size:12px;color:var(--muted);font-weight:600;}
+.sp{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:#d0d5e8;border-radius:2px;}
+footer{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);padding:0 32px;height:32px;display:flex;align-items:center;justify-content:space-between;z-index:50;}
+.fl,.fr{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px;}
+.fd{width:3px;height:3px;background:var(--red);border-radius:50%;}
+canvas{display:block;}
+#sme-map{height:560px;border-radius:12px;border:1px solid var(--border);z-index:1;}
+.leaflet-popup-content-wrapper{border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);}
+.leaflet-popup-content{font-family:'Nunito','Aptos',sans-serif;font-size:12px;line-height:1.6;min-width:200px;}
+.map-popup-title{font-weight:800;font-size:13px;color:#1a2340;margin-bottom:6px;}
+.map-popup-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin:1px;}
+.map-legend{background:white;border-radius:10px;border:1px solid #e4e9f4;padding:12px 14px;font-family:'Nunito',sans-serif;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.map-legend-title{font-weight:800;font-size:12px;color:#1a2340;margin-bottom:8px;}
+.map-legend-item{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-weight:600;color:#4a5568;}
+.map-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.map-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.map-btn{padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text);cursor:pointer;transition:all .2s;}
+.map-btn.active,.map-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo-block">
+    <svg width="248" height="46" viewBox="0 0 248 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Dark pill background for the mark -->
+      <rect x="0" y="3" width="74" height="40" rx="8" fill="#0d1525"/>
+
+      <!-- "O" — bold geometric O with inner cutout -->
+      <rect x="9" y="9" width="20" height="28" rx="4" fill="#8B1A1A"/>
+      <rect x="14" y="15" width="10" height="16" rx="2" fill="#0d1525"/>
+
+      <!-- "C" — cut rectangle forming a C -->
+      <rect x="34" y="9" width="18" height="5" rx="2" fill="#ffffff"/>
+      <rect x="34" y="32" width="18" height="5" rx="2" fill="#ffffff"/>
+      <rect x="34" y="9" width="5" height="28" rx="2" fill="#ffffff"/>
+
+      <!-- Red vertical divider -->
+      <rect x="86" y="8" width="2" height="30" rx="1" fill="#8B1A1A"/>
+
+      <!-- OCHWADA — heavy, wide-tracked caps -->
+      <text x="98" y="26"
+        font-family="'Nunito','Aptos',sans-serif"
+        font-weight="900"
+        font-size="17"
+        letter-spacing="4"
+        fill="#ffffff"
+      >OCHWADA</text>
+
+      <!-- CAPITAL — lighter, wider spaced -->
+      <text x="99" y="39"
+        font-family="'Nunito','Aptos',sans-serif"
+        font-weight="400"
+        font-size="8.5"
+        letter-spacing="5.5"
+        fill="rgba(255,255,255,0.35)"
+      >CAPITAL</text>
+    </svg>
+  </div>
+  <nav class="top-nav">
+    <a class="active" onclick="showSection('overview',this)">Overview</a>
+    <a onclick="showSection('sector',this)">Sector Intel</a>
+    <a onclick="showSection('risk',this)">Risk</a>
+    <a onclick="showSection('impact',this)">M&amp;E Impact</a>
+    <a onclick="showSection('portfolio',this)">Portfolio</a>
+    <a onclick="showSection('smes',this)">SME Directory</a>
+    <a onclick="showSection('geo',this)">🗺 Map</a>
+  </nav>
+  <div class="top-bar-right">
+    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+    <button class="btn-ref" onclick="loadAll()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- KPI HERO -->
+<div class="kpi-hero">
+  <div class="khi"><div class="khi-label">Capital Deployed</div><div class="khi-value" id="h-dep">—</div><div class="khi-sub nt" id="h-dep-s">Loading...</div></div>
+  <div class="khi"><div class="khi-label">Total Investments</div><div class="khi-value" id="h-inv">—</div><div class="khi-sub nt">Loans · Grants · Equity</div></div>
+  <div class="khi"><div class="khi-label">Default Rate</div><div class="khi-value" id="h-def">—</div><div class="khi-sub dn" id="h-def-s">Loading...</div></div>
+  <div class="khi"><div class="khi-label">Jobs Created</div><div class="khi-value" id="h-jobs">—</div><div class="khi-sub up" id="h-jobs-s">Employment impact</div></div>
+  <div class="khi"><div class="khi-label">Total SMEs</div><div class="khi-value" id="h-smes">—</div><div class="khi-sub nt">East Africa portfolio</div></div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Filters:</span>
+  <select class="fsel" id="f-country" onchange="applyFilters()"><option value="">All Countries</option></select>
+  <select class="fsel" id="f-stage" onchange="applyFilters()"><option value="">All Stages</option><option>Startup</option><option>Growth</option><option>Mature</option></select>
+  <select class="fsel" id="f-gender" onchange="applyFilters()"><option value="">All Genders</option><option>Female</option><option>Male</option><option>Mixed</option></select>
+  <select class="fsel" id="f-invtype" onchange="applyFilters()"><option value="">All Types</option><option>Loan</option><option>Grant</option><option>Equity</option><option>Blended</option></select>
+  <select class="fsel" id="f-risk" onchange="applyFilters()"><option value="">All Risk Bands</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+  <button class="filter-reset" onclick="resetFilters()">✕ Reset Filters</button>
+</div>
+
+<!-- SECTION TABS -->
+<div class="section-tabs">
+  <div class="stab active" onclick="showSection('overview',this)">Overview</div>
+  <div class="stab" onclick="showSection('sector',this)">Sector Intelligence</div>
+  <div class="stab" onclick="showSection('risk',this)">Risk Intelligence</div>
+  <div class="stab" onclick="showSection('impact',this)">M&amp;E Impact</div>
+  <div class="stab" onclick="showSection('portfolio',this)">Portfolio</div>
+  <div class="stab" onclick="showSection('smes',this)">SME Directory</div>
+  <div class="stab" onclick="showSection('geo',this)">🗺 Geography</div>
+</div>
+
+<div class="content">
+
+<!-- ══ OVERVIEW ══ -->
+<div id="section-overview" class="section active">
+  <div class="mg" id="kpi-cards"><div class="loading"><span class="sp"></span>Loading metrics...</div></div>
+  <div class="g31 mb">
+    <div class="card"><div class="ch"><div><div class="ct">Average Monthly Revenue vs Expenses</div><div class="cs">Performance trend across all SMEs in portfolio</div></div></div><div class="cb"><canvas id="c-rev" height="195"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">Investment Status</div></div><div class="cb"><canvas id="c-status" height="195"></canvas></div></div>
+  </div>
+  <div class="g3 mb">
+    <div class="card"><div class="ch"><div class="ct">SMEs by Country</div></div><div class="cb"><canvas id="c-country" height="195"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">Capital by Investment Type</div></div><div class="cb"><canvas id="c-type" height="195"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">Gender of Business Owners</div></div><div class="cb"><canvas id="c-gender" height="195"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ch"><div><div class="ct">Funding Equity — Average Ticket Size by Gender</div><div class="cs">Priority insight: equal access to capital</div></div></div><div class="cb"><canvas id="c-equity-ticket" height="180"></canvas></div></div>
+    <div class="card"><div class="ch"><div><div class="ct">Default Rate by Gender Group</div><div class="cs">Risk comparison across ownership types</div></div></div><div class="cb"><canvas id="c-equity-default" height="180"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ══ SECTOR INTELLIGENCE ══ -->
+<div id="section-sector" class="section">
+  <div class="section-head"><h2>Sector Intelligence</h2><p>Capital concentration · performance comparison · employment impact by industry</p></div>
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div class="ct">Capital Deployed by Sector</div></div><div class="cb"><canvas id="c-sec-cap" height="250"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">Avg Monthly Revenue by Sector</div></div><div class="cb"><canvas id="c-sec-rev" height="250"></canvas></div></div>
+  </div>
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div><div class="ct">Sector Default Rate (%)</div><div class="cs">Risk heatmap by industry</div></div></div><div class="cb"><canvas id="c-sec-def" height="220"></canvas></div></div>
+    <div class="card"><div class="ch"><div><div class="ct">Jobs Created by Sector</div><div class="cs">Employment impact per industry</div></div></div><div class="cb"><canvas id="c-sec-jobs" height="220"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div><div class="ct">Sector Performance Comparison — Full Table</div><div class="cs">Revenue · Margin · Repayment · Impact · Cost per Job</div></div></div>
+    <div class="tw"><table class="dt" id="t-sector"><tbody><tr><td><div class="loading"><span class="sp"></span>Loading...</div></td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ RISK INTELLIGENCE ══ -->
+<div id="section-risk" class="section">
+  <div class="section-head"><h2>Risk Intelligence</h2><p>Default probability · Loan portfolio aging · Exposure concentration · Repayment stress</p></div>
+  <div class="mg" id="risk-kpis"><div class="loading"><span class="sp"></span>Loading...</div></div>
+
+  <div id="exposure-alert" class="alert-card" style="display:none">
+    <div class="alert-title">⚠ Portfolio Concentration Warning</div>
+    <div class="alert-body" id="exposure-alert-text"></div>
+  </div>
+
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div class="ct">Portfolio Risk Band Distribution</div></div><div class="cb"><canvas id="c-risk-band" height="225"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">On-Time vs Late Payments</div></div><div class="cb"><canvas id="c-repay" height="225"></canvas></div></div>
+  </div>
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div><div class="ct">Loan Portfolio Aging (PAR)</div><div class="cs">Current · 1-30 · 31-90 · 90+ Days overdue</div></div></div><div class="cb"><canvas id="c-aging" height="210"></canvas></div></div>
+    <div class="card"><div class="ch"><div><div class="ct">Exposure Concentration by Sector</div><div class="cs">% of total capital per sector</div></div></div><div class="cb"><canvas id="c-exposure" height="210"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct">Avg Repayment Score by Risk Band</div></div>
+    <div class="cb"><canvas id="c-rep-score" height="150"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ M&E IMPACT ══ -->
+<div id="section-impact" class="section">
+  <div class="section-head"><h2>M&amp;E Impact Report</h2><p>Jobs · Inclusion · SDG alignment · Impact efficiency · Cost per beneficiary</p></div>
+  <div class="mg5" id="impact-kpis"><div class="loading"><span class="sp"></span>Loading...</div></div>
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div class="ct">Jobs Created vs Retained — Annual</div></div><div class="cb"><canvas id="c-jobs" height="215"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">Women &amp; Youth Employment Trend</div></div><div class="cb"><canvas id="c-inclusion" height="215"></canvas></div></div>
+  </div>
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div><div class="ct">Impact Efficiency — Cost per Beneficiary</div><div class="cs">Capital efficiency ratios (KES per outcome)</div></div></div><div class="cb"><canvas id="c-efficiency" height="200"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">SDG Alignment — Jobs Created by Goal</div></div><div class="cb"><canvas id="c-sdg" height="200"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div><div class="ct">Funding Equity — Performance by Ownership Type</div><div class="cs">Comparing women-owned vs male-owned vs mixed SMEs</div></div></div>
+    <div class="tw"><table class="dt" id="t-equity"><tbody><tr><td><div class="loading"><span class="sp"></span>Loading...</div></td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ PORTFOLIO ══ -->
+<div id="section-portfolio" class="section">
+  <div class="section-head"><h2>Investor Portfolio</h2><p>Investor performance scorecard · sector preferences · capital deployment analysis</p></div>
+  <div class="g2 mb">
+    <div class="card"><div class="ch"><div class="ct">Top Investors by Total Disbursement</div></div><div class="cb"><canvas id="c-inv-top" height="255"></canvas></div></div>
+    <div class="card"><div class="ch"><div class="ct">Default Rate by Investor Type</div></div><div class="cb"><canvas id="c-inv-def" height="255"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div><div class="ct">Investor Scorecard — Full Portfolio Breakdown</div><div class="cs">SMEs funded · capital deployed · risk performance</div></div></div>
+    <div class="tw"><table class="dt" id="t-investors"><tbody><tr><td><div class="loading"><span class="sp"></span>Loading...</div></td></tr></tbody></table></div>
+  </div>
+</div>
+
+<!-- ══ SME DIRECTORY ══ -->
+<div id="section-smes" class="section">
+  <div class="section-head"><h2>SME Directory</h2><p>Top 50 SMEs ranked by repayment score · 👩 Women-owned · 🎓 Youth-led</p></div>
+  <div class="card">
+    <div class="tw"><table class="dt" id="t-smes"><tbody><tr><td><div class="loading"><span class="sp"></span>Loading...</div></td></tr></tbody></table></div>
+  </div>
+</div>
+
+
+<!-- ══ GEOGRAPHY ══ -->
+<div id="section-geo" class="section">
+  <div class="section-head"><h2>Geographic Intelligence</h2><p>Interactive SME map · Location · Risk · Funding · Sector across East Africa</p></div>
+
+  <div class="mg5" id="geo-kpis"><div class="loading"><span class="sp"></span>Loading...</div></div>
+
+  <div class="card mb">
+    <div class="ch">
+      <div>
+        <div class="ct">SME Location Map — East Africa Portfolio</div>
+        <div class="cs">500 SMEs mapped across 6 countries · Pins coloured by risk band · Size = funding amount · Click any pin for details</div>
+      </div>
+    </div>
+    <div style="padding:14px 20px 4px;">
+      <div class="map-controls">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);align-self:center;">Colour by:</span>
+        <button class="map-btn active" onclick="setMapMode('risk',this)">Risk Band</button>
+        <button class="map-btn" onclick="setMapMode('sector',this)">Sector</button>
+        <button class="map-btn" onclick="setMapMode('gender',this)">Gender</button>
+        <button class="map-btn" onclick="setMapMode('stage',this)">Business Stage</button>
+        <span style="font-size:11px;font-weight:700;color:var(--muted);align-self:center;margin-left:8px;">Filter:</span>
+        <select class="fsel" id="map-f-country" onchange="redrawMap()"><option value="">All Countries</option></select>
+        <select class="fsel" id="map-f-sector" onchange="redrawMap()"><option value="">All Sectors</option></select>
+        <button class="map-btn" onclick="resetMap()">✕ Reset</button>
+      </div>
+    </div>
+    <div style="padding:0 20px 20px;">
+      <div id="sme-map"></div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div class="ct">SMEs by Country</div></div>
+      <div class="cb"><canvas id="c-geo-country" height="200"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Capital Deployed by Region</div></div>
+      <div class="cb"><canvas id="c-geo-capital" height="200"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct">Urban vs Rural Distribution</div></div>
+      <div class="cb"><canvas id="c-geo-zone" height="200"></canvas></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<footer>
+  <div class="fl"><span>Ochwada Capital</span><div class="fd"></div><span>SME Investment Intelligence Platform</span><div class="fd"></div><span>Supabase · IBM Watsonx · Python</span></div>
+  <div class="fr">Data · Analytics · Impact</div>
+</footer>
+
+<script>
+const API='https://dqgwryvbxhlyreytctxg.supabase.co/functions/v1/analytics';
+const CH={};
+const C={red:'#8B1A1A',navy:'#1A3A5C',amber:'#f59e0b',green:'#22c55e',blue:'#3b82f6',teal:'#0d9488',purple:'#8b5cf6',border:'#e4e9f4'};
+const PAL=[C.red,C.navy,C.amber,C.green,C.teal,C.blue,C.purple,'#f97316','#ec4899','#6366f1','#84cc16','#06b6d4'];
+Chart.defaults.color='#7a85a0';Chart.defaults.borderColor='#e4e9f4';Chart.defaults.font.family="'Nunito','Aptos',sans-serif";Chart.defaults.font.size=11;Chart.defaults.font.weight='600';
+
+// Data store for filtering
+let ALL_DATA = {};
+let FILTERS = {country:'',stage:'',gender:'',invtype:'',risk:''};
+
+async function fd(q){const r=await fetch(`${API}?query=${q}`);const j=await r.json();return j.data||[];}
+function fk(n){n=parseFloat(n);if(n>=1e9)return'KES '+(n/1e9).toFixed(1)+'B';if(n>=1e6)return'KES '+(n/1e6).toFixed(1)+'M';if(n>=1e3)return'KES '+(n/1e3).toFixed(0)+'K';return'KES '+n.toFixed(0);}
+function fn(n){return parseFloat(n).toLocaleString();}
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+function mc(id,cfg){dc(id);const ctx=document.getElementById(id);if(!ctx)return;CH[id]=new Chart(ctx,cfg);}
+const GCFG={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f0f3f9'},ticks:{font:{size:10.5}}},x:{grid:{display:false},ticks:{font:{size:10.5}}}}};
+
+function showSection(name,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.stab,.top-nav a').forEach(t=>t.classList.remove('active'));
+  const sec=document.getElementById('section-'+name);
+  if(sec) sec.classList.add('active');
+  if(el) el.classList.add('active');
+  // Invalidate map size so tiles render correctly when tab becomes visible
+  if(name==='geo' && MAP_INSTANCE){
+    setTimeout(()=>{ MAP_INSTANCE.invalidateSize(); }, 100);
+  }
+}
+
+function applyFilters(){
+  FILTERS.country=document.getElementById('f-country').value;
+  FILTERS.stage=document.getElementById('f-stage').value;
+  FILTERS.gender=document.getElementById('f-gender').value;
+  FILTERS.invtype=document.getElementById('f-invtype').value;
+  FILTERS.risk=document.getElementById('f-risk').value;
+  // Re-render charts with filtered data if we have it
+  if(ALL_DATA.smes_by_country) renderOverviewCharts();
+}
+
+function resetFilters(){
+  ['f-country','f-stage','f-gender','f-invtype','f-risk'].forEach(id=>{document.getElementById(id).value='';});
+  FILTERS={country:'',stage:'',gender:'',invtype:'',risk:''};
+  if(ALL_DATA.smes_by_country) renderOverviewCharts();
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────
+async function loadKPIs(){
+  const d=(await fd('kpi_summary'))[0]||{};
+  document.getElementById('h-dep').textContent=fk(d.total_disbursed);
+  document.getElementById('h-inv').textContent=fn(d.total_investments);
+  document.getElementById('h-def').textContent=d.default_rate_pct+'%';
+  document.getElementById('h-jobs').textContent=fn(d.total_jobs_created);
+  document.getElementById('h-smes').textContent=fn(d.total_smes);
+  document.getElementById('h-dep-s').innerHTML=`<span class="nt">${fn(d.total_smes)} businesses tracked</span>`;
+  document.getElementById('h-def-s').innerHTML=`<span class="dn">${d.total_defaults} defaults recorded</span>`;
+  document.getElementById('h-jobs-s').innerHTML=`<span class="up">+${fn(d.total_women_employed)} women · +${fn(d.total_youth_employed)} youth</span>`;
+  const cards=[
+    {l:'Avg Interest Rate',v:d.avg_interest_rate+'%',d:'Across all loan products',c:C.navy},
+    {l:'Women-Owned SMEs',v:fn(d.women_owned_smes),d:Math.round(d.women_owned_smes/d.total_smes*100)+'% of portfolio',c:'#be185d'},
+    {l:'Youth-Led SMEs',v:fn(d.youth_led_smes),d:Math.round(d.youth_led_smes/d.total_smes*100)+'% of portfolio',c:C.teal},
+    {l:'Women Employed',v:fn(d.total_women_employed),d:'Gender inclusion metric',c:C.amber},
+  ];
+  document.getElementById('kpi-cards').innerHTML=cards.map(x=>`<div class="mc" style="--mc:${x.c}"><div class="mc-label">${x.l}</div><div class="mc-value">${x.v}</div><div class="mc-desc">${x.d}</div></div>`).join('');
+}
+
+// ── Overview ──────────────────────────────────────────────────────
+async function loadOverview(){
+  const [rev,status,country,byType,inclusion,equity]=await Promise.all([fd('revenue_trend'),fd('investment_status'),fd('smes_by_country'),fd('disbursement_by_type'),fd('inclusion_metrics'),fd('funding_equity')]);
+  ALL_DATA={rev,status,country,byType,inclusion,equity,smes_by_country:country};
+  // Populate country filter
+  const cf=document.getElementById('f-country');
+  country.forEach((c)=>{ if(!cf.querySelector(`option[value="${c.country}"]`)){const o=document.createElement('option');o.value=c.country;o.textContent=c.country;cf.appendChild(o); }});
+  renderOverviewCharts();
+}
+
+function renderOverviewCharts(){
+  const {rev,status,country,byType,inclusion,equity}=ALL_DATA;
+  mc('c-rev',{type:'line',data:{labels:rev.map(r=>r.month),datasets:[{label:'Revenue',data:rev.map(r=>parseFloat(r.avg_revenue)),borderColor:C.green,backgroundColor:'rgba(34,197,94,0.07)',tension:0.4,fill:true,pointRadius:2},{label:'Expenses',data:rev.map(r=>parseFloat(r.avg_expenses)),borderColor:C.red,backgroundColor:'rgba(139,26,26,0.05)',tension:0.4,fill:true,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:10,padding:14,font:{size:11}}}},scales:{y:{ticks:{callback:v=>fk(v),font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{ticks:{maxRotation:45,maxTicksLimit:10,font:{size:10}},grid:{display:false}}}}});
+  mc('c-status',{type:'doughnut',data:{labels:status.map(s=>s.status),datasets:[{data:status.map(s=>s.count),backgroundColor:[C.blue,C.green,C.amber,C.red],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,font:{size:11}}}}}});
+  const fCountry=FILTERS.country;
+  const cData=fCountry?country.filter(c=>c.country===fCountry):country;
+  mc('c-country',{type:'bar',data:{labels:cData.map(c=>c.country),datasets:[{data:cData.map(c=>c.sme_count),backgroundColor:PAL,borderWidth:0,borderRadius:6}]},options:{...GCFG}});
+  mc('c-type',{type:'bar',data:{labels:byType.map(t=>t.investment_type),datasets:[{data:byType.map(t=>parseFloat(t.total_disbursed)/1e6),backgroundColor:[C.red,C.navy,C.amber,C.teal],borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${ctx.raw.toFixed(1)}M`}}},scales:{y:{ticks:{callback:v=>`${v}M`,font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  const inc=inclusion[0]||{};
+  mc('c-gender',{type:'doughnut',data:{labels:['Female','Male','Mixed'],datasets:[{data:[inc.female_owners,inc.male_owners,inc.mixed_owners],backgroundColor:['#be185d',C.navy,C.amber],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,font:{size:11}}}}}});
+  // Funding equity charts
+  const fData=FILTERS.gender?equity.filter((e)=>e.label.toLowerCase().includes(FILTERS.gender.toLowerCase())):equity;
+  mc('c-equity-ticket',{type:'bar',data:{labels:fData.map((e)=>e.label),datasets:[{data:fData.map((e)=>parseFloat(e.avg_ticket||0)/1e3),backgroundColor:[C.red,C.navy,C.amber],borderWidth:0,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${(ctx.raw*1000).toLocaleString()}`}}},scales:{y:{ticks:{callback:v=>`${v}K`,font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  mc('c-equity-default',{type:'bar',data:{labels:fData.map((e)=>e.label),datasets:[{data:fData.map((e)=>parseFloat(e.default_rate||0)),backgroundColor:[C.red+'bb',C.navy+'bb',C.amber+'bb'],borderWidth:0,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`}}},scales:{y:{ticks:{callback:v=>v+'%',font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+}
+
+// ── Sector Intelligence ───────────────────────────────────────────
+async function loadSector(){
+  const data=await fd('sector_performance');
+  const top12=data.slice(0,12);
+  mc('c-sec-cap',{type:'bar',data:{labels:top12.map(s=>s.sector_name.length>16?s.sector_name.substring(0,16)+'…':s.sector_name),datasets:[{data:top12.map(s=>parseFloat(s.total_disbursed)/1e6),backgroundColor:PAL,borderWidth:0,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${ctx.raw.toFixed(1)}M`}}},scales:{x:{ticks:{callback:v=>`${v}M`,font:{size:10}},grid:{color:'#f0f3f9'}},y:{grid:{display:false},ticks:{font:{size:9.5}}}}}});
+  mc('c-sec-rev',{type:'bar',data:{labels:top12.map(s=>s.sector_name.length>16?s.sector_name.substring(0,16)+'…':s.sector_name),datasets:[{data:top12.map(s=>parseFloat(s.avg_monthly_revenue)/1e3),backgroundColor:C.teal+'bb',borderColor:C.teal,borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${(ctx.raw*1000).toLocaleString()}`}}},scales:{x:{ticks:{callback:v=>`${v}K`,font:{size:10}},grid:{color:'#f0f3f9'}},y:{grid:{display:false},ticks:{font:{size:9.5}}}}}});
+  mc('c-sec-def',{type:'bar',data:{labels:data.map(s=>s.sector_name.length>14?s.sector_name.substring(0,14)+'…':s.sector_name),datasets:[{data:data.map(s=>parseFloat(s.default_rate_pct)),backgroundColor:data.map(s=>parseFloat(s.default_rate_pct)>15?C.red+'cc':parseFloat(s.default_rate_pct)>8?C.amber+'cc':C.green+'cc'),borderWidth:0,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`}}},scales:{y:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f0f3f9'}},x:{ticks:{maxRotation:35,font:{size:9}},grid:{display:false}}}}});
+  mc('c-sec-jobs',{type:'bar',data:{labels:top12.map(s=>s.sector_name.length>14?s.sector_name.substring(0,14)+'…':s.sector_name),datasets:[{data:top12.map(s=>s.jobs_created),backgroundColor:C.sage+'bb'||C.green+'88',borderWidth:0,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f0f3f9'}},x:{ticks:{maxRotation:35,font:{size:9}},grid:{display:false}}}}});
+  document.getElementById('t-sector').innerHTML=`<thead><tr><th>Sector</th><th>Category</th><th>SMEs</th><th>Capital</th><th>Avg Rev/Mo</th><th>Profit Margin</th><th>Rep. Score</th><th>Default Rate</th><th>Jobs</th><th>Women Emp.</th><th>Cost/Job</th></tr></thead><tbody>${data.map(s=>`<tr><td><strong>${s.sector_name}</strong></td><td><span class="badge bn">${s.category}</span></td><td>${s.sme_count}</td><td class="hl">${fk(s.total_disbursed)}</td><td>${fk(s.avg_monthly_revenue)}</td><td><span class="badge ${parseFloat(s.avg_profit_margin)>20?'bg':parseFloat(s.avg_profit_margin)>10?'by':'br'}">${s.avg_profit_margin}%</span></td><td><span class="badge ${parseFloat(s.avg_repayment_score)>=70?'bg':parseFloat(s.avg_repayment_score)>=40?'by':'br'}">${s.avg_repayment_score}</span></td><td><span class="badge ${parseFloat(s.default_rate_pct)<5?'bg':parseFloat(s.default_rate_pct)<15?'by':'br'}">${s.default_rate_pct}%</span></td><td>${fn(s.jobs_created)}</td><td>${fn(s.women_employed)}</td><td class="${s.cost_per_job!=='N/A'?'hl':''}">${s.cost_per_job==='N/A'?'—':fk(s.cost_per_job)}</td></tr>`).join('')}</tbody>`;
+}
+
+// ── Risk Intelligence ─────────────────────────────────────────────
+async function loadRisk(){
+  const [risk,repay,aging,exposure]=await Promise.all([fd('risk_distribution'),fd('repayment_performance'),fd('loan_aging'),fd('exposure_concentration')]);
+  const rp=repay[0]||{};
+  const rC={Low:C.green,Medium:C.amber,High:C.red,Critical:'#dc2626'};
+  mc('c-risk-band',{type:'doughnut',data:{labels:risk.map(r=>r.risk_band+' ('+r.count+')'),datasets:[{data:risk.map(r=>r.count),backgroundColor:risk.map(r=>rC[r.risk_band]||'#888'),borderWidth:2,borderColor:'#fff',hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
+  mc('c-repay',{type:'doughnut',data:{labels:['On Time','Late'],datasets:[{data:[parseInt(rp.total_payments||0)-parseInt(rp.late_payments||0),parseInt(rp.late_payments||0)],backgroundColor:[C.green,C.red],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
+  // Loan Aging
+  const agingColors=[C.green,C.amber,C.red,'#dc2626'];
+  mc('c-aging',{type:'bar',data:{labels:aging.map(a=>a.bucket),datasets:[{data:aging.map(a=>parseFloat(a.amount)/1e6),backgroundColor:agingColors,borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${ctx.raw.toFixed(1)}M`}}},scales:{y:{ticks:{callback:v=>`${v}M`,font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  // Exposure by sector
+  const exp=exposure[0]||{};
+  const secBrk=(exp.sector_breakdown||[]).slice(0,8);
+  mc('c-exposure',{type:'bar',data:{labels:secBrk.map((s)=>s.sector.length>14?s.sector.substring(0,14)+'…':s.sector),datasets:[{data:secBrk.map((s)=>parseFloat(s.pct)),backgroundColor:PAL,borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`}}},scales:{y:{ticks:{callback:v=>v+'%',font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{ticks:{maxRotation:30,font:{size:9}},grid:{display:false}}}}});
+  mc('c-rep-score',{type:'bar',data:{labels:risk.map(r=>r.risk_band),datasets:[{data:risk.map(r=>parseFloat(r.avg_repayment_score)),backgroundColor:risk.map(r=>rC[r.risk_band]||'#888'),borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{max:100,grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  // Exposure alert
+  const topSecPct=parseFloat(exp.top_sector_pct||0),top10Pct=parseFloat(exp.top10_sme_pct||0);
+  if(topSecPct>30||top10Pct>40){
+    document.getElementById('exposure-alert').style.display='block';
+    document.getElementById('exposure-alert-text').textContent=`${exp.top_sector} accounts for ${topSecPct}% of total capital. Top 10 SMEs hold ${top10Pct}% of the portfolio. Consider diversifying exposure across sectors and regions.`;
+  }
+  // Risk KPIs
+  document.getElementById('risk-kpis').innerHTML=[
+    {l:'Repayment Rate',v:rp.repayment_rate_pct+'%',d:'Total collected vs due',c:C.green},
+    {l:'Late Payments',v:fn(rp.late_payments),d:`Avg ${rp.avg_days_late} days overdue`,c:C.amber},
+    {l:'NPL (90+ Days)',v:aging.find((a)=>a.bucket.includes('90+'))?.count||0,d:'Non-performing loans',c:C.red},
+    {l:'Top Sector Exposure',v:exp.top_sector_pct+'%',d:exp.top_sector||'',c:C.navy},
+  ].map(x=>`<div class="mc" style="--mc:${x.c}"><div class="mc-label">${x.l}</div><div class="mc-value">${x.v}</div><div class="mc-desc">${x.d}</div></div>`).join('');
+}
+
+// ── M&E Impact ────────────────────────────────────────────────────
+async function loadImpact(){
+  const [impData,sdg,efficiency,equity]=await Promise.all([fd('impact_summary'),fd('sdg_alignment'),fd('impact_efficiency'),fd('funding_equity')]);
+  const ef=efficiency[0]||{};
+  mc('c-jobs',{type:'bar',data:{labels:impData.map(r=>r.year),datasets:[{label:'Created',data:impData.map(r=>r.jobs_created),backgroundColor:C.green+'cc',borderWidth:0,borderRadius:4},{label:'Retained',data:impData.map(r=>r.jobs_retained),backgroundColor:C.navy+'cc',borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:10,padding:14,font:{size:11}}}},scales:{y:{grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  mc('c-inclusion',{type:'line',data:{labels:impData.map(r=>r.year),datasets:[{label:'Women',data:impData.map(r=>r.women_employed),borderColor:'#be185d',backgroundColor:'rgba(190,24,93,0.07)',tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#be185d'},{label:'Youth',data:impData.map(r=>r.youth_employed),borderColor:C.amber,borderDash:[5,4],borderWidth:2,tension:0.4,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{boxWidth:10,padding:14,font:{size:11}}}},scales:{y:{grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  // Cost efficiency
+  const efLabels=['Cost/Job Created','Cost/Job Retained','Cost/Woman Emp.','Cost/Youth Emp.'];
+  const efVals=[parseFloat(ef.cost_per_job||0)/1e3,parseFloat(ef.cost_per_retained||0)/1e3,parseFloat(ef.cost_per_woman||0)/1e3,parseFloat(ef.cost_per_youth||0)/1e3];
+  mc('c-efficiency',{type:'bar',data:{labels:efLabels,datasets:[{data:efVals,backgroundColor:[C.navy,C.teal,'#be185d',C.amber],borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${(ctx.raw*1000).toLocaleString()}`}}},scales:{y:{ticks:{callback:v=>`${v}K`,font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  mc('c-sdg',{type:'bar',data:{labels:sdg.map(s=>s.sdg_alignment.split('—')[0].trim()),datasets:[{data:sdg.map(s=>s.jobs_created),backgroundColor:PAL,borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  // Impact KPIs
+  document.getElementById('impact-kpis').innerHTML=[
+    {l:'Jobs Created',v:fn(ef.total_jobs),d:'New employment',c:C.green},
+    {l:'Jobs Retained',v:fn(ef.total_retained),d:'Sustained employment',c:C.teal},
+    {l:'Women Employed',v:fn(ef.total_women),d:'Gender inclusion',c:'#be185d'},
+    {l:'Youth Employed',v:fn(ef.total_youth),d:'Youth empowerment',c:C.amber},
+    {l:'Avg Profit Margin',v:ef.avg_profit_margin+'%',d:'Portfolio-wide average',c:C.navy},
+  ].map(x=>`<div class="mc" style="--mc:${x.c}"><div class="mc-label">${x.l}</div><div class="mc-value">${x.v}</div><div class="mc-desc">${x.d}</div></div>`).join('');
+  // Equity table
+  document.getElementById('t-equity').innerHTML=`<thead><tr><th>Group</th><th>Businesses</th><th>Total Funding</th><th>Avg Ticket Size</th><th>Default Rate</th><th>Jobs Created</th><th>Women Employed</th><th>Cost per Job</th></tr></thead><tbody>${equity.map((e)=>`<tr><td><strong>${e.label}</strong></td><td>${fn(e.count)}</td><td class="hl">${fk(e.dis||0)}</td><td>${fk(e.avg_ticket||0)}</td><td><span class="badge ${parseFloat(e.default_rate)<5?'bg':parseFloat(e.default_rate)<15?'by':'br'}">${e.default_rate}%</span></td><td>${fn(e.jobs||0)}</td><td>${fn(e.women||0)}</td><td>${e.cost_per_job==='N/A'?'—':fk(e.cost_per_job)}</td></tr>`).join('')}</tbody>`;
+}
+
+// ── Portfolio ─────────────────────────────────────────────────────
+async function loadPortfolio(){
+  const investors=await fd('portfolio_by_investor');
+  const top10=investors.slice(0,10).reverse();
+  mc('c-inv-top',{type:'bar',data:{labels:top10.map(i=>i.investor_name.length>22?i.investor_name.substring(0,22)+'…':i.investor_name),datasets:[{data:top10.map(i=>parseFloat(i.total_disbursed)/1e6),backgroundColor:C.navy+'cc',borderColor:C.navy,borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${ctx.raw.toFixed(1)}M`}}},scales:{x:{ticks:{callback:v=>`${v}M`,font:{size:10}},grid:{color:'#f0f3f9'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  const bt ={};investors.forEach(i=>{if(!bt[i.investor_type])bt[i.investor_type]={s:0,n:0};bt[i.investor_type].s+=parseFloat(i.default_rate_pct||0);bt[i.investor_type].n++;});
+  const tl=Object.keys(bt),tv=tl.map(k=>(bt[k].s/bt[k].n).toFixed(2));
+  mc('c-inv-def',{type:'bar',data:{labels:tl,datasets:[{data:tv,backgroundColor:PAL,borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`}}},scales:{y:{ticks:{callback:v=>v+'%',font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+  document.getElementById('t-investors').innerHTML=`<thead><tr><th>Investor</th><th>Type</th><th>SMEs</th><th>Investments</th><th>Total Disbursed</th><th>Avg Rate</th><th>Defaults</th><th>Default Rate</th></tr></thead><tbody>${investors.map(i=>`<tr><td><strong>${i.investor_name}</strong></td><td><span class="badge bb">${i.investor_type}</span></td><td>${i.total_smes}</td><td>${i.total_investments}</td><td class="hl">${fk(i.total_disbursed)}</td><td>${i.avg_rate}%</td><td class="${parseInt(i.defaults)>10?'hr':''}">${i.defaults}</td><td><span class="badge ${parseFloat(i.default_rate_pct)<5?'bg':parseFloat(i.default_rate_pct)<15?'by':'br'}">${i.default_rate_pct}%</span></td></tr>`).join('')}</tbody>`;
+}
+
+// ── SME Directory ─────────────────────────────────────────────────
+async function loadSMEs(){
+  const data=await fd('top_smes');
+  let filtered=data;
+  if(FILTERS.stage)filtered=filtered.filter((s)=>s.business_stage===FILTERS.stage);
+  document.getElementById('t-smes').innerHTML=`<thead><tr><th>#</th><th>Business</th><th>Owner</th><th>Sector</th><th>Location</th><th>Stage</th><th>Funding</th><th>Rep. Score</th><th>Growth</th><th>Default Risk</th><th></th></tr></thead><tbody>${filtered.map((s,i)=>`<tr><td class="hl">${i+1}</td><td><strong>${s.business_name}</strong></td><td>${s.owner_name}</td><td><span class="badge bb">${s.sector_name||'—'}</span></td><td>${s.city||'—'}, ${s.country||'—'}</td><td><span class="badge ${s.business_stage==='Mature'?'bg':s.business_stage==='Growth'?'by':'bn'}">${s.business_stage}</span></td><td class="hl">${fk(s.total_funding||0)}</td><td><span class="badge ${parseFloat(s.avg_repayment_score)>=70?'bg':parseFloat(s.avg_repayment_score)>=40?'by':'br'}">${s.avg_repayment_score}</span></td><td>${s.avg_growth_score}</td><td><span class="badge ${parseFloat(s.avg_default_prob)<0.1?'bg':parseFloat(s.avg_default_prob)<0.4?'by':'br'}">${(parseFloat(s.avg_default_prob)*100).toFixed(1)}%</span></td><td>${s.is_women_owned?'👩':''}${s.is_youth_led?'🎓':''}</td></tr>`).join('')}</tbody>`;
+}
+
+
+
+// ── Geography & Map ──────────────────────────────────────────────
+let MAP_INSTANCE = null;
+let MAP_DATA = [];
+let MAP_MARKERS = [];
+let MAP_MODE = 'risk';
+
+const RISK_COLORS = {Low:'#22c55e', Medium:'#f59e0b', High:'#ef4444', Critical:'#dc2626'};
+const SECTOR_COLORS = {Agriculture:'#16a34a', Trade:'#2563eb', Manufacturing:'#7c3aed', Services:'#0d9488', Tech:'#f59e0b'};
+const GENDER_COLORS = {Female:'#be185d', Male:'#1A3A5C', Mixed:'#f59e0b'};
+const STAGE_COLORS = {Startup:'#3b82f6', Growth:'#f59e0b', Mature:'#22c55e'};
+
+function getMarkerColor(sme) {
+  if (MAP_MODE === 'risk') return RISK_COLORS[sme.risk_band] || '#888';
+  if (MAP_MODE === 'sector') return SECTOR_COLORS[sme.category] || '#888';
+  if (MAP_MODE === 'gender') {
+    if (sme.is_women_owned) return GENDER_COLORS.Female;
+    return GENDER_COLORS.Male;
+  }
+  if (MAP_MODE === 'stage') return STAGE_COLORS[sme.business_stage] || '#888';
+  return '#8B1A1A';
+}
+
+function getMarkerSize(sme) {
+  const f = parseFloat(sme.total_funding || 0);
+  if (f > 5000000) return 18;
+  if (f > 1000000) return 14;
+  if (f > 500000) return 11;
+  return 9;
+}
+
+function createMarkerIcon(sme) {
+  const color = getMarkerColor(sme);
+  const size = getMarkerSize(sme);
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);cursor:pointer;transition:transform .15s;"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+}
+
+function setMapMode(mode, btn) {
+  MAP_MODE = mode;
+  document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  redrawMap();
+}
+
+function resetMap() {
+  document.getElementById('map-f-country').value = '';
+  document.getElementById('map-f-sector').value = '';
+  if (MAP_INSTANCE) MAP_INSTANCE.setView([1.0, 35.0], 5);
+  redrawMap();
+}
+
+function redrawMap() {
+  if (!MAP_INSTANCE || !MAP_DATA.length) return;
+  MAP_MARKERS.forEach(m => MAP_INSTANCE.removeLayer(m));
+  MAP_MARKERS = [];
+  const fCountry = document.getElementById('map-f-country').value;
+  const fSector = document.getElementById('map-f-sector').value;
+  let filtered = MAP_DATA;
+  if (fCountry) filtered = filtered.filter(s => s.country === fCountry);
+  if (fSector) filtered = filtered.filter(s => s.category === fSector);
+  filtered.forEach(sme => {
+    if (!sme.lat || !sme.lng) return;
+    const marker = L.marker([sme.lat, sme.lng], { icon: createMarkerIcon(sme) });
+    const f = parseFloat(sme.total_funding || 0);
+    const fStr = f >= 1e6 ? 'KES '+(f/1e6).toFixed(1)+'M' : f >= 1e3 ? 'KES '+(f/1e3).toFixed(0)+'K' : 'KES '+f.toFixed(0);
+    const rColor = RISK_COLORS[sme.risk_band] || '#888';
+    marker.bindPopup(`
+      <div class="map-popup-title">${sme.business_name}</div>
+      <div style="color:#7a85a0;margin-bottom:6px;">${sme.owner_name}</div>
+      <div style="margin-bottom:6px;">
+        <span class="map-popup-badge" style="background:#eff6ff;color:#2563eb;">${sme.sector_name}</span>
+        <span class="map-popup-badge" style="background:#f0fdf4;color:#16a34a;">${sme.category}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;">
+        <div><b>Location:</b> ${sme.city}, ${sme.country}</div>
+        <div><b>Zone:</b> ${sme.zone}</div>
+        <div><b>Stage:</b> ${sme.business_stage}</div>
+        <div><b>Funding:</b> <b style="color:#f59e0b;">${fStr}</b></div>
+        <div><b>Risk:</b> <b style="color:${rColor};">${sme.risk_band}</b></div>
+        <div>${sme.is_women_owned ? '👩 Women-owned' : ''}${sme.is_youth_led ? ' 🎓 Youth-led' : ''}</div>
+      </div>
+    `);
+    marker.addTo(MAP_INSTANCE);
+    MAP_MARKERS.push(marker);
+  });
+
+  // Update legend
+  updateLegend();
+}
+
+let MAP_LEGEND = null;
+function updateLegend() {
+  // Remove existing legend properly using Leaflet's remove method
+  if (MAP_LEGEND) {
+    MAP_LEGEND.remove();
+    MAP_LEGEND = null;
+  }
+  MAP_LEGEND = L.control({ position: 'bottomright' });
+  MAP_LEGEND.onAdd = function() {
+    const div = L.DomUtil.create('div', 'map-legend');
+    let colorMap, title;
+    if (MAP_MODE === 'risk') { colorMap = RISK_COLORS; title = 'Risk Band'; }
+    else if (MAP_MODE === 'sector') { colorMap = SECTOR_COLORS; title = 'Sector'; }
+    else if (MAP_MODE === 'gender') { colorMap = GENDER_COLORS; title = 'Ownership'; }
+    else { colorMap = STAGE_COLORS; title = 'Stage'; }
+    div.innerHTML = `<div class="map-legend-title">${title}</div>` +
+      Object.entries(colorMap).map(([k,v]) =>
+        `<div class="map-legend-item"><div class="map-legend-dot" style="background:${v}"></div>${k}</div>`
+      ).join('');
+    return div;
+  };
+  MAP_LEGEND.addTo(MAP_INSTANCE);
+}
+
+async function loadGeo() {
+  const data = await fd('geo_map');
+  MAP_DATA = data;
+
+  // Populate map filters
+  const countries = [...new Set(data.map(s => s.country))].sort();
+  const sectors = [...new Set(data.map(s => s.category))].sort();
+  const cf = document.getElementById('map-f-country');
+  const sf = document.getElementById('map-f-sector');
+  countries.forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; cf.appendChild(o); });
+  sectors.forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; sf.appendChild(o); });
+
+  // Geo KPIs
+  const countries_count = [...new Set(data.map(s => s.country))].length;
+  const cities_count = [...new Set(data.map(s => s.city))].length;
+  const urban = data.filter(s => s.zone === 'Urban').length;
+  const high_risk = data.filter(s => s.risk_band === 'High' || s.risk_band === 'Critical').length;
+  document.getElementById('geo-kpis').innerHTML = [
+    {l:'Countries Covered', v:countries_count, d:'East Africa nations', c:'#1A3A5C'},
+    {l:'Cities & Towns', v:cities_count, d:'Urban & peri-urban hubs', c:'#0d9488'},
+    {l:'Urban SMEs', v:urban+' / '+data.length, d:'Urban concentration', c:'#f59e0b'},
+    {l:'High/Critical Risk', v:high_risk, d:'Require immediate attention', c:'#ef4444'},
+    {l:'SMEs on Map', v:data.length, d:'Fully geo-tagged', c:'#22c55e'},
+  ].map(x => `<div class="mc" style="--mc:${x.c}"><div class="mc-label">${x.l}</div><div class="mc-value">${x.v}</div><div class="mc-desc">${x.d}</div></div>`).join('');
+
+  // Init map
+  if (!MAP_INSTANCE) {
+    MAP_INSTANCE = L.map('sme-map', {zoomControl:true, scrollWheelZoom:true}).setView([1.0, 35.0], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA',
+      maxZoom: 18
+    }).addTo(MAP_INSTANCE);
+    setTimeout(()=>{ MAP_INSTANCE.invalidateSize(); }, 200);
+  }
+
+  redrawMap();
+
+  // Country chart
+  const cGroups = {};
+  data.forEach(s => { cGroups[s.country] = (cGroups[s.country]||0)+1; });
+  const cSorted = Object.entries(cGroups).sort((a,b)=>b[1]-a[1]);
+  mc('c-geo-country',{type:'bar',data:{labels:cSorted.map(x=>x[0]),datasets:[{data:cSorted.map(x=>x[1]),backgroundColor:['#8B1A1A','#1A3A5C','#f59e0b','#0d9488','#22c55e','#8b5cf6'],borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+
+  // Capital by country
+  const capGroups = {};
+  data.forEach(s => { capGroups[s.country] = (capGroups[s.country]||0)+parseFloat(s.total_funding||0); });
+  const capSorted = Object.entries(capGroups).sort((a,b)=>b[1]-a[1]);
+  mc('c-geo-capital',{type:'bar',data:{labels:capSorted.map(x=>x[0]),datasets:[{data:capSorted.map(x=>x[1]/1e6),backgroundColor:['#1A3A5C','#8B1A1A','#f59e0b','#0d9488','#22c55e','#8b5cf6'],borderWidth:0,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` KES ${ctx.raw.toFixed(1)}M`}}},scales:{y:{ticks:{callback:v=>`${v}M`,font:{size:10.5}},grid:{color:'#f0f3f9'}},x:{grid:{display:false}}}}});
+
+  // Zone chart
+  const zoneG = {Urban:0,'Peri-urban':0,Rural:0};
+  data.forEach(s => { if(zoneG[s.zone]!==undefined) zoneG[s.zone]++; });
+  mc('c-geo-zone',{type:'doughnut',data:{labels:Object.keys(zoneG),datasets:[{data:Object.values(zoneG),backgroundColor:['#1A3A5C','#f59e0b','#22c55e'],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,font:{size:11}}}}}});
+}
+
+async function loadAll(){
+  await Promise.all([loadKPIs(),loadOverview(),loadSector(),loadRisk(),loadImpact(),loadPortfolio(),loadSMEs(),loadGeo()]);
+}
+loadAll();
+</script>
+</body>
+</html>
