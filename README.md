@@ -26,7 +26,7 @@ The interactive dashboard features **7 tabs** powered by live data:
 | **M&E Impact** | Jobs, women & youth employment, SDG alignment, cost per beneficiary |
 | **Portfolio** | Investor scorecard, default rates, full portfolio breakdown |
 | **SME Directory** | Top 50 SMEs ranked by repayment score with full scorecard |
-| **🗺 Geography** | Interactive Leaflet map — 500 SMEs across East Africa |
+| **🗺 Geography** | Interactive Leaflet map 500 SMEs across East Africa |
 
 ---
 
